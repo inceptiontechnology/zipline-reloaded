@@ -223,7 +223,11 @@ class BcolzMinuteBarMetadata:
                 minutes_per_day = US_EQUITIES_MINUTES_PER_DAY
 
             if version >= 2:
-                calendar = get_calendar(raw_data["calendar_name"])
+                try:
+                    calendar = get_calendar(raw_data['calendar_name'])
+                except:
+                    calendar = None
+
                 start_session = pd.Timestamp(raw_data["start_session"])
                 end_session = pd.Timestamp(raw_data["end_session"])
             else:
@@ -254,14 +258,14 @@ class BcolzMinuteBarMetadata:
             )
 
     def __init__(
-        self,
-        default_ohlc_ratio,
-        ohlc_ratios_per_sid,
-        calendar,
-        start_session,
-        end_session,
-        minutes_per_day,
-        version=FORMAT_VERSION,
+            self,
+            default_ohlc_ratio,
+            ohlc_ratios_per_sid,
+            calendar,
+            start_session,
+            end_session,
+            minutes_per_day,
+            version=FORMAT_VERSION,
     ):
         self.calendar = calendar
         self.start_session = start_session
@@ -405,16 +409,16 @@ class BcolzMinuteBarWriter:
     COL_NAMES = ("open", "high", "low", "close", "volume")
 
     def __init__(
-        self,
-        rootdir,
-        calendar,
-        start_session,
-        end_session,
-        minutes_per_day,
-        default_ohlc_ratio=OHLC_RATIO,
-        ohlc_ratios_per_sid=None,
-        expectedlen=DEFAULT_EXPECTEDLEN,
-        write_metadata=True,
+            self,
+            rootdir,
+            calendar,
+            start_session,
+            end_session,
+            minutes_per_day,
+            default_ohlc_ratio=OHLC_RATIO,
+            ohlc_ratios_per_sid=None,
+            expectedlen=DEFAULT_EXPECTEDLEN,
+            write_metadata=True,
     ):
 
         self._rootdir = rootdir
@@ -781,7 +785,7 @@ class BcolzMinuteBarWriter:
 
         # Get all the minutes we wish to write (all market minutes after the
         # latest currently written, up to and including last_minute_to_write)
-        all_minutes_in_window = all_minutes[num_rec_mins : latest_min_count + 1]
+        all_minutes_in_window = all_minutes[num_rec_mins: latest_min_count + 1]
 
         minutes_count = all_minutes_in_window.size
 
@@ -885,7 +889,11 @@ class BcolzMinuteBarReader(MinuteBarReader):
         self._start_session = metadata.start_session
         self._end_session = metadata.end_session
 
-        self.calendar = metadata.calendar
+        if calendar is None:
+            self.calendar = metadata.calendar
+        else:
+            self.calendar = calendar
+
         slicer = self.calendar.schedule.index.slice_indexer(
             self._start_session,
             self._end_session,
@@ -993,10 +1001,10 @@ class BcolzMinuteBarReader(MinuteBarReader):
         for market_open, early_close in self._minutes_to_exclude():
             start_pos = self._find_position_of_minute(early_close) + 1
             end_pos = (
-                self._find_position_of_minute(market_open) + self._minutes_per_day - 1
+                    self._find_position_of_minute(market_open) + self._minutes_per_day - 1
             )
             data = (start_pos, end_pos)
-            itree[start_pos : end_pos + 1] = data
+            itree[start_pos: end_pos + 1] = data
         return itree
 
     def _exclusion_indices_for_range(self, start_idx, end_idx):
@@ -1222,12 +1230,12 @@ class BcolzMinuteBarReader(MinuteBarReader):
 
             for i, sid in enumerate(sids):
                 carray = self._open_minute_file(field, sid)
-                values = carray[start_idx : end_idx + 1]
+                values = carray[start_idx: end_idx + 1]
                 if indices_to_exclude is not None:
                     for excl_start, excl_stop in indices_to_exclude[::-1]:
                         excl_slice = np.s_[
-                            excl_start - start_idx : excl_stop - start_idx + 1
-                        ]
+                                     excl_start - start_idx: excl_stop - start_idx + 1
+                                     ]
                         values = np.delete(values, excl_slice)
 
                 where = values != 0
@@ -1235,8 +1243,8 @@ class BcolzMinuteBarReader(MinuteBarReader):
                 # written data for all the minutes requested
                 if field != "volume":
                     out[: len(where), i][where] = values[
-                        where
-                    ] * self._ohlc_ratio_inverse_for_sid(sid)
+                                                      where
+                                                  ] * self._ohlc_ratio_inverse_for_sid(sid)
                 else:
                     out[: len(where), i][where] = values[where]
 
@@ -1301,7 +1309,7 @@ class H5MinuteBarUpdateWriter:
         """
 
         with HDFStore(
-            self._path, "w", complevel=self._complevel, complib=self._complib
+                self._path, "w", complevel=self._complevel, complib=self._complib
         ) as store:
             data = pd.concat(frames, keys=frames.keys()).sort_index()
             data.index.set_names(["sid", "date_time"], inplace=True)

@@ -232,6 +232,7 @@ class TradingAlgorithm:
         capital_changes=None,
         get_pipeline_loader=None,
         create_event_context=None,
+        instant_filling=False,
         **initialize_kwargs,
     ):
         # List of trading controls to be used to validate orders.
@@ -245,6 +246,8 @@ class TradingAlgorithm:
 
         self._platform = platform
         self.logger = None
+
+        self.instant_filling = instant_filling
 
         # XXX: This is kind of a mess.
         # We support passing a data_portal in `run`, but we need an asset
@@ -583,6 +586,7 @@ class TradingAlgorithm:
             self._create_clock(),
             benchmark_source,
             self.restrictions,
+            instant_filling=self.instant_filling
         )
 
         metrics_tracker.handle_start_of_simulation(benchmark_source)

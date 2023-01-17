@@ -84,6 +84,7 @@ def _run(
     blotter,
     custom_loader,
     benchmark_spec,
+    instant_filling
 ):
     """Run a backtest for the given algorithm.
 
@@ -94,6 +95,7 @@ def _run(
         bundle,
         environ,
         bundle_timestamp,
+        calendar=trading_calendar
     )
 
     if trading_calendar is None:
@@ -212,6 +214,7 @@ def _run(
             metrics_set=metrics_set,
             blotter=blotter,
             benchmark_returns=benchmark_returns,
+            instant_filling=instant_filling,
             benchmark_sid=benchmark_sid,
             **{
                 "initialize": initialize,
@@ -319,6 +322,7 @@ def run_algorithm(
     environ=os.environ,
     custom_loader=None,
     blotter="default",
+    instant_filling=False
 ):
     """
     Run a trading algorithm.
@@ -380,6 +384,8 @@ def run_algorithm(
         ``zipline.extensions.register`` and call it with no parameters.
         Default is a :class:`zipline.finance.blotter.SimulationBlotter` that
         never cancels orders.
+    instant_filling: The order fills instantly as soon as it appears
+
 
     Returns
     -------
@@ -417,6 +423,7 @@ def run_algorithm(
         blotter=blotter,
         custom_loader=custom_loader,
         benchmark_spec=benchmark_spec,
+        instant_filling=instant_filling
     )
 
 

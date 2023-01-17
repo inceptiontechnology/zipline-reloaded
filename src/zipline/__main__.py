@@ -250,6 +250,13 @@ DEFAULT_BUNDLE = "quandl"
         help="Should the algorithm methods be " "resolved in the local namespace.",
     )
 )
+@click.option(
+    '--instant-filling',
+    default=False,
+    help="If the orders can be filled instantly",
+    show_default=True,
+)
+
 @click.pass_context
 def run(
     ctx,

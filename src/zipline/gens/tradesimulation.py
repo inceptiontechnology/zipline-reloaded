@@ -41,6 +41,7 @@ class AlgorithmSimulator:
         clock,
         benchmark_source,
         restrictions,
+        instant_filling
     ):
 
         # ==============
@@ -72,6 +73,7 @@ class AlgorithmSimulator:
 
         self.benchmark_source = benchmark_source
 
+        self.instant_filling = instant_filling
         # =============
         # Logging Setup
         # =============
@@ -118,6 +120,20 @@ class AlgorithmSimulator:
 
             blotter = algo.blotter
 
+            # If instant filling, the blotter deals with the orders first
+            if self.instant_filling:
+                handle_data(algo, current_data, dt_to_use)
+
+                # grab any new orders from the blotter, then clear the list.
+                # this includes cancelled orders.
+                new_orders = blotter.new_orders
+                blotter.new_orders = []
+
+                # if we have any new orders, record them so that we know
+                # in what perf period they were placed.
+                for new_order in new_orders:
+                    metrics_tracker.process_order(new_order)
+
             # handle any transactions and commissions coming out new orders
             # placed in the last bar
             (
@@ -137,18 +153,18 @@ class AlgorithmSimulator:
 
             for commission in new_commissions:
                 metrics_tracker.process_commission(commission)
+            if not self.instant_filling:
+                handle_data(algo, current_data, dt_to_use)
 
-            handle_data(algo, current_data, dt_to_use)
+                # grab any new orders from the blotter, then clear the list.
+                # this includes cancelled orders.
+                new_orders = blotter.new_orders
+                blotter.new_orders = []
 
-            # grab any new orders from the blotter, then clear the list.
-            # this includes cancelled orders.
-            new_orders = blotter.new_orders
-            blotter.new_orders = []
-
-            # if we have any new orders, record them so that we know
-            # in what perf period they were placed.
-            for new_order in new_orders:
-                metrics_tracker.process_order(new_order)
+                # if we have any new orders, record them so that we know
+                # in what perf period they were placed.
+                for new_order in new_orders:
+                    metrics_tracker.process_order(new_order)
 
         def once_a_day(
             midnight_dt,

@@ -230,13 +230,13 @@ def _make_bundle_core():
 
     @curry
     def register(
-        name,
-        f,
-        calendar_name="NYSE",
-        start_session=None,
-        end_session=None,
-        minutes_per_day=390,
-        create_writers=True,
+            name,
+            f,
+            calendar_name="NYSE",
+            start_session=None,
+            end_session=None,
+            minutes_per_day=390,
+            create_writers=True,
     ):
         """Register a data bundle ingest function.
 
@@ -345,11 +345,12 @@ def _make_bundle_core():
             raise UnknownBundle(name)
 
     def ingest(
-        name,
-        environ=os.environ,
-        timestamp=None,
-        assets_versions=(),
-        show_progress=False,
+            name,
+            environ=os.environ,
+            timestamp=None,
+            assets_versions=(),
+            show_progress=False,
+            calendar=None
     ):
         """Ingest data for a given bundle.
 
@@ -371,8 +372,8 @@ def _make_bundle_core():
             bundle = bundles[name]
         except KeyError:
             raise UnknownBundle(name)
-
-        calendar = get_calendar(bundle.calendar_name)
+        if calendar is None:
+            calendar = get_calendar(bundle.calendar_name)
 
         start_session = bundle.start_session
         end_session = bundle.end_session
@@ -392,7 +393,7 @@ def _make_bundle_core():
         pth.ensure_directory(pth.data_path([name, timestr], environ=environ))
         pth.ensure_directory(cachepath)
         with dataframe_cache(
-            cachepath, clean_on_failure=False
+                cachepath, clean_on_failure=False
         ) as cache, ExitStack() as stack:
             # we use `cleanup_on_failure=False` so that we don't purge the
             # cache directory if the load fails in the middle
@@ -509,7 +510,7 @@ def _make_bundle_core():
                 ),
             )
 
-    def load(name, environ=os.environ, timestamp=None):
+    def load(name, environ=os.environ, timestamp=None, calendar=None):
         """Loads a previously ingested bundle.
 
         Parameters
@@ -536,9 +537,11 @@ def _make_bundle_core():
             ),
             equity_minute_bar_reader=BcolzMinuteBarReader(
                 minute_equity_path(name, timestr, environ=environ),
+                calendar=calendar
             ),
             equity_daily_bar_reader=BcolzDailyBarReader(
                 daily_equity_path(name, timestr, environ=environ),
+                calendar=calendar
             ),
             adjustment_reader=SQLiteAdjustmentReader(
                 adjustment_db_path(name, timestr, environ=environ),
@@ -605,7 +608,7 @@ def _make_bundle_core():
             def should_clean(name):
                 dt = from_bundle_ingest_dirname(name)
                 return (before is not None and dt < before) or (
-                    after is not None and dt > after
+                        after is not None and dt > after
                 )
 
         elif keep_last >= 0:

@@ -418,7 +418,7 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
     zipline.data.bcolz_daily_bars.BcolzDailyBarWriter
     """
 
-    def __init__(self, table, read_all_threshold=3000):
+    def __init__(self, table, read_all_threshold=3000, calendar=None):
         self._maybe_table_rootdir = table
         # Cache of fully read np.array for the carrays in the daily bar table.
         # raw_array does not use the same cache, but it could.
@@ -427,6 +427,7 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
         self._spot_cols = {}
         self.PRICE_ADJUSTMENT_FACTOR = 0.001
         self._read_all_threshold = read_all_threshold
+        self.calendar = calendar
 
     @lazyval
     def _table(self):
@@ -441,7 +442,10 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
             # backwards compatibility with old formats, will remove
             return pd.DatetimeIndex(self._table.attrs["calendar"])
         else:
-            cal = get_calendar(self._table.attrs["calendar_name"])
+            if self.calendar is None:
+                cal = get_calendar(self._table.attrs['calendar_name'])
+            else:
+                cal = self.calendar
             start_session_ns = self._table.attrs["start_session_ns"]
 
             start_session = pd.Timestamp(start_session_ns)
@@ -484,6 +488,8 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
     @lazyval
     def trading_calendar(self):
         if "calendar_name" in self._table.attrs.attrs:
+            if self.calendar is not None:
+                return self.calendar
             return get_calendar(self._table.attrs["calendar_name"])
         else:
             return None
