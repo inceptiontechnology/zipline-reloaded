@@ -396,6 +396,8 @@ def run_algorithm(
     --------
     zipline.data.bundles.bundles : The available data bundles.
     """
+    start = start.tz_convert(None)
+    end = end.tz_convert(None)
     load_extensions(default_extension, extensions, strict_extensions, environ)
 
     benchmark_spec = BenchmarkSpec.from_returns(benchmark_returns)
