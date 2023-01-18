@@ -880,7 +880,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
     # can do so by mutating DEFAULT_MINUTELY_SID_CACHE_SIZES.
     _default_proxy = mappingproxy(DEFAULT_MINUTELY_SID_CACHE_SIZES)
 
-    def __init__(self, rootdir, sid_cache_sizes=_default_proxy):
+    def __init__(self, rootdir, sid_cache_sizes=_default_proxy, calendar=None):
 
         self._rootdir = rootdir
 
